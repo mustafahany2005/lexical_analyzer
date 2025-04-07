@@ -1,52 +1,61 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <ctype.h>
+#include <stdlib.h>
 
-/* Global declarations */
 int charClass;
 char lexeme[100];
 char nextChar;
 int lexLen;
 int token;
 int nextToken;
-FILE* in_fp;
+int inputIndex;
+char input[100];
 
-/* Function declarations */
 void addChar();
 void getChar();
 void getNonBlank();
 int lex();
+void printTokenType(int tokenCode);
 
-/* Character classes */
 #define LETTER 0
 #define DIGIT 1
 #define UNKNOWN 99
 
-/* Token codes */
-#define INT_LIT 10
-#define IDENT 11
-#define ASSIGN_OP 20
-#define ADD_OP 21
-#define SUB_OP 22
-#define MULT_OP 23
-#define DIV_OP 24
-#define LEFT_PAREN 25
-#define RIGHT_PAREN 26
+#define IDENT 1      // Identifier
+#define INT_LIT 2    // Number
+#define ASSIGN_OP 3  // Operator
+#define ADD_OP 3     // Operator
+#define SUB_OP 3     // Operator
+#define MULT_OP 3    // Operator
+#define DIV_OP 3     // Operator
+#define LEFT_PAREN 4 // Left Parenthesis
+#define RIGHT_PAREN 5 // Right Parenthesis
 
-/* main driver */
 int main() {
-    if ((in_fp = fopen("front.in", "r")) == NULL)
-        printf("ERROR - cannot open front.in \n");
-    else {
-        getChar();
-        do {
-            lex();
-        } while (nextToken != EOF);
-    }
-    return 0;
+    // Default input
+    sprintf(input, "Mustafa = ( 2005 + 20 ) * 10");
+    inputIndex = 0;
+    printf("Default input: %s\n", input);
+    getChar();
+    do {
+        lex();
+    } while (nextToken != EOF);
+
+    // Single user input
+    printf("\nEnter an expression: ");
+    fgets(input, 100, stdin);
+    inputIndex = 0;
+    printf("Processing input: %s", input);
+    getChar();
+    do {
+        lex();
+    } while (nextToken != EOF);
+
+    printf("Exiting program.\n");
+    exit(0);
 }
 
-/* lookup */
 int lookup(char ch) {
     switch (ch) {
     case '(':
@@ -73,6 +82,10 @@ int lookup(char ch) {
         addChar();
         nextToken = DIV_OP;
         break;
+    case '=':
+        addChar();
+        nextToken = ASSIGN_OP;
+        break;
     default:
         addChar();
         nextToken = EOF;
@@ -81,7 +94,6 @@ int lookup(char ch) {
     return nextToken;
 }
 
-/* addChar */
 void addChar() {
     if (lexLen <= 98) {
         lexeme[lexLen++] = nextChar;
@@ -91,9 +103,9 @@ void addChar() {
         printf("Error - lexeme is too long \n");
 }
 
-/* getChar */
 void getChar() {
-    if ((nextChar = getc(in_fp)) != EOF) {
+    if (input[inputIndex] != '\0') {
+        nextChar = input[inputIndex++];
         if (isalpha(nextChar))
             charClass = LETTER;
         else if (isdigit(nextChar))
@@ -105,13 +117,11 @@ void getChar() {
         charClass = EOF;
 }
 
-/* getNonBlank */
 void getNonBlank() {
     while (isspace(nextChar))
         getChar();
 }
 
-/* lex */
 int lex() {
     lexLen = 0;
     getNonBlank();
@@ -146,6 +156,28 @@ int lex() {
         lexeme[3] = 0;
         break;
     }
-    printf("Next token is: %d, Next lexeme is %s\n", nextToken, lexeme);
+    printTokenType(nextToken);
     return nextToken;
+}
+
+void printTokenType(int tokenCode) {
+    if (tokenCode == EOF) {
+        printf("Token Type: End of Input, Token Code: -1, Lexeme: %s\n", lexeme);
+    }
+    else if (tokenCode == IDENT) {
+        printf("Token Type: Identifier, Token Code: 1, Lexeme: %s\n", lexeme);
+    }
+    else if (tokenCode == INT_LIT) {
+        printf("Token Type: Number, Token Code: 2, Lexeme: %s\n", lexeme);
+    }
+    else if (tokenCode == ASSIGN_OP || tokenCode == ADD_OP || tokenCode == SUB_OP ||
+        tokenCode == MULT_OP || tokenCode == DIV_OP) {
+        printf("Token Type: Operator, Token Code: 3, Lexeme: %s\n", lexeme);
+    }
+    else if (tokenCode == LEFT_PAREN) {
+        printf("Token Type: Left Parenthesis, Token Code: 4, Lexeme: %s\n", lexeme);
+    }
+    else if (tokenCode == RIGHT_PAREN) {
+        printf("Token Type: Right Parenthesis, Token Code: 5, Lexeme: %s\n", lexeme);
+    }
 }
